@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor — Gemcities</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="editor-shell">
+
+  <!-- Top nav -->
+  <nav class="editor-nav">
+    <a class="nav-logo" href="/">Gem<span>cities</span></a>
+    <span class="filename-display" id="current-filename">No file open</span>
+    <span class="unsaved-dot" id="unsaved-dot" style="display:none" title="Unsaved changes">●</span>
+    <button class="btn btn-primary btn-sm" onclick="saveFile()">Save</button>
+    <button class="btn btn-secondary btn-sm" onclick="newFile()">New file</button>
+    <button class="btn btn-secondary btn-sm" onclick="newFolder()">New folder</button>
+    <button class="btn btn-secondary btn-sm" onclick="renameFile()">Rename</button>
+    <button class="btn btn-secondary btn-sm" onclick="deleteFile()">Delete</button>
+    <button class="btn btn-secondary btn-sm" onclick="api.export()" title="Download ZIP of your capsule">Export</button>
+    <a href="/settings.html" class="btn btn-secondary btn-sm">Settings</a>
+    <button class="btn btn-secondary btn-sm" onclick="logout()">Sign out</button>
+  </nav>
+
+  <!-- File tree -->
+  <aside class="editor-sidebar">
+    <div class="pane-header">Files</div>
+    <div class="file-tree" id="file-tree"></div>
+  </aside>
+
+  <!-- Editor -->
+  <div class="editor-pane">
+    <div class="pane-header">
+      Edit
+      <span style="font-size:0.72rem;color:#adb5bd;font-weight:400">Ctrl+S to save</span>
+    </div>
+    <textarea id="editor-textarea" spellcheck="false" placeholder="Open a file to start editing…"></textarea>
+  </div>
+
+  <!-- Preview -->
+  <div class="editor-preview">
+    <div class="pane-header">Preview</div>
+    <div id="preview-content"></div>
+  </div>
+
+</div>
+
+<!-- Input modal -->
+<div class="modal-overlay hidden" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Input</h3>
+    <input type="text" id="modal-input" style="width:100%;margin-bottom:0" class="form-group">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/preview.js"></script>
+<script src="/js/editor.js"></script>
+</body>
+</html>

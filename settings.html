@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Settings — Gemcities</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="nav">
+  <a class="nav-logo" href="/">Gem<span>cities</span></a>
+  <div class="nav-links">
+    <a href="/editor.html">Back to editor</a>
+  </div>
+</nav>
+<div class="container" style="padding-top:2rem">
+  <h1 style="font-size:1.4rem;margin-bottom:2rem">Account settings</h1>
+
+  <div class="card" style="margin-bottom:1.5rem">
+    <h2 style="font-size:1.1rem;margin-bottom:1rem">Export capsule</h2>
+    <p style="font-size:0.9rem;color:#6c757d;margin-bottom:1rem">Download all your files as a ZIP archive.</p>
+    <button class="btn btn-secondary" onclick="api.export()">Download ZIP</button>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem;border-color:#fecaca">
+    <h2 style="font-size:1.1rem;margin-bottom:0.5rem;color:#dc3545">Delete account</h2>
+    <p style="font-size:0.9rem;color:#6c757d;margin-bottom:1rem">Permanently deletes your account and all files. This cannot be undone.</p>
+    <div id="delete-alert" class="alert alert-error" style="display:none"></div>
+    <button class="btn btn-danger btn-sm" onclick="showDeleteForm()">Delete my account</button>
+    <form id="delete-form" style="display:none;margin-top:1rem">
+      <div class="form-group">
+        <label for="del-password">Confirm your password</label>
+        <input id="del-password" type="password" autocomplete="current-password" required>
+      </div>
+      <div style="display:flex;gap:0.75rem">
+        <button type="submit" class="btn btn-danger btn-sm" id="delete-btn">Delete permanently</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="hideDeleteForm()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+  function showDeleteForm() { document.getElementById('delete-form').style.display = 'block'; }
+  function hideDeleteForm() { document.getElementById('delete-form').style.display = 'none'; }
+
+  document.getElementById('delete-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alert = document.getElementById('delete-alert');
+    const btn   = document.getElementById('delete-btn');
+    btn.disabled = true;
+    btn.textContent = 'Deleting…';
+    try {
+      await api.deleteAccount(document.getElementById('del-password').value);
+      window.location.href = '/?deleted=1';
+    } catch (err) {
+      alert.textContent = err.error === 'INVALID_CREDENTIALS' ? 'Incorrect password.' : 'Something went wrong.';
+      alert.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Delete permanently';
+    }
+  });
+</script>
+</body>
+</html>

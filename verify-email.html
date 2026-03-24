@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email — Gemcities</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="nav">
+  <a class="nav-logo" href="/">Gem<span>cities</span></a>
+</nav>
+<div class="container page-center">
+  <div class="card" style="text-align:center">
+    <div id="loading">Verifying your email…</div>
+    <div id="success" style="display:none">
+      <div style="font-size:2.5rem;margin-bottom:1rem">✓</div>
+      <h2 style="margin-bottom:0.75rem">Email verified</h2>
+      <p style="color:#6c757d;margin-bottom:1.5rem">Your capsule is ready. Sign in to start writing.</p>
+      <a href="/login.html" class="btn btn-primary">Sign in</a>
+    </div>
+    <div id="error" style="display:none">
+      <div style="font-size:2.5rem;margin-bottom:1rem">✗</div>
+      <h2 style="margin-bottom:0.75rem">Verification failed</h2>
+      <p id="error-msg" style="color:#6c757d;margin-bottom:1.5rem"></p>
+      <a href="/register.html" class="btn btn-secondary">Back to register</a>
+    </div>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+  (async () => {
+    const token = new URLSearchParams(window.location.search).get('token');
+    if (!token) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error-msg').textContent = 'No verification token found.';
+      document.getElementById('error').style.display = 'block';
+      return;
+    }
+    try {
+      await api.verifyEmail(token);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('success').style.display = 'block';
+    } catch (err) {
+      document.getElementById('loading').style.display = 'none';
+      const msgs = { INVALID_TOKEN: 'This link is invalid or has already been used.', TOKEN_EXPIRED: 'This link has expired. Please register again.' };
+      document.getElementById('error-msg').textContent = msgs[err.error] || 'Verification failed.';
+      document.getElementById('error').style.display = 'block';
+    }
+  })();
+</script>
+</body>
+</html>

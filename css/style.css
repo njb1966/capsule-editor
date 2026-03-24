@@ -1,0 +1,132 @@
+/* ── reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
+a { color: #0d9488; text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { cursor: pointer; font: inherit; }
+
+/* ── layout ── */
+.container { max-width: 640px; margin: 0 auto; padding: 2rem 1rem; }
+.page-center { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+
+/* ── nav ── */
+.nav { background: #fff; border-bottom: 1px solid #e9ecef; padding: 0 1.5rem; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+.nav-logo { font-weight: 700; font-size: 1.1rem; color: #212529; letter-spacing: -0.02em; }
+.nav-logo span { color: #0d9488; }
+.nav-links { display: flex; gap: 1rem; align-items: center; }
+.nav-links a { font-size: 0.9rem; color: #6c757d; }
+.nav-links a:hover { color: #212529; text-decoration: none; }
+
+/* ── hero ── */
+.hero { padding: 5rem 1rem 3rem; text-align: center; }
+.hero h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1rem; }
+.hero h1 span { color: #0d9488; }
+.hero p { font-size: 1.15rem; color: #6c757d; max-width: 520px; margin: 0 auto 2rem; }
+.hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+/* ── how it works ── */
+.steps { background: #fff; border-top: 1px solid #e9ecef; border-bottom: 1px solid #e9ecef; padding: 3rem 1rem; }
+.steps-inner { max-width: 800px; margin: 0 auto; }
+.steps h2 { text-align: center; font-size: 1.4rem; margin-bottom: 2rem; }
+.steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; }
+.step { text-align: center; }
+.step-num { width: 40px; height: 40px; border-radius: 50%; background: #0d9488; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; }
+.step h3 { font-size: 1rem; margin-bottom: 0.4rem; }
+.step p { font-size: 0.9rem; color: #6c757d; }
+
+/* ── about section ── */
+.about { max-width: 680px; margin: 3rem auto; padding: 0 1rem; }
+.about h2 { font-size: 1.4rem; margin-bottom: 1rem; }
+.about p { color: #495057; margin-bottom: 0.75rem; font-size: 0.95rem; }
+
+/* ── footer ── */
+.footer { border-top: 1px solid #e9ecef; padding: 1.5rem 1rem; text-align: center; font-size: 0.85rem; color: #adb5bd; }
+.footer a { color: #6c757d; margin: 0 0.5rem; }
+
+/* ── buttons ── */
+.btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.25rem; border-radius: 6px; font-weight: 600; font-size: 0.9rem; border: none; transition: opacity 0.15s; }
+.btn:hover { opacity: 0.88; text-decoration: none; }
+.btn-primary { background: #0d9488; color: #fff; }
+.btn-secondary { background: #fff; color: #212529; border: 1px solid #ced4da; }
+.btn-danger { background: #dc3545; color: #fff; }
+.btn-sm { padding: 0.35rem 0.85rem; font-size: 0.82rem; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── forms ── */
+.card { background: #fff; border: 1px solid #e9ecef; border-radius: 10px; padding: 2rem; }
+.card h2 { font-size: 1.35rem; margin-bottom: 1.5rem; }
+.form-group { margin-bottom: 1.1rem; }
+label { display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.3rem; color: #495057; }
+input[type=text], input[type=email], input[type=password] {
+  width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #ced4da;
+  border-radius: 6px; font: inherit; font-size: 0.95rem; background: #fff;
+  transition: border-color 0.15s; outline: none;
+}
+input:focus { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,.15); }
+.form-hint { font-size: 0.8rem; color: #6c757d; margin-top: 0.25rem; }
+.form-footer { margin-top: 1.25rem; font-size: 0.88rem; color: #6c757d; text-align: center; }
+.form-footer a { color: #0d9488; }
+
+/* ── alerts ── */
+.alert { padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 1rem; }
+.alert-error { background: #fff5f5; color: #c0392b; border: 1px solid #fecaca; }
+.alert-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.alert-info { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+
+/* ── editor layout ── */
+.editor-shell { display: grid; grid-template-columns: 220px 1fr 1fr; grid-template-rows: 56px 1fr; height: 100vh; overflow: hidden; }
+.editor-nav { grid-column: 1 / -1; background: #fff; border-bottom: 1px solid #e9ecef; display: flex; align-items: center; padding: 0 1rem; gap: 0.75rem; }
+.editor-nav .nav-logo { margin-right: auto; }
+.editor-sidebar { border-right: 1px solid #e9ecef; background: #fff; overflow-y: auto; display: flex; flex-direction: column; }
+.editor-pane { display: flex; flex-direction: column; border-right: 1px solid #e9ecef; }
+.editor-preview { overflow-y: auto; background: #fff; }
+.pane-header { padding: 0.5rem 0.75rem; border-bottom: 1px solid #e9ecef; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6c757d; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-shrink: 0; }
+.pane-header-actions { display: flex; gap: 0.3rem; }
+
+/* ── file tree ── */
+.file-tree { flex: 1; overflow-y: auto; padding: 0.5rem 0; }
+.tree-item { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.75rem; font-size: 0.875rem; cursor: pointer; user-select: none; color: #495057; border-radius: 0; }
+.tree-item:hover { background: #f8f9fa; }
+.tree-item.active { background: #e6f3f2; color: #0d9488; font-weight: 600; }
+.tree-item.is-dir { font-weight: 600; color: #212529; }
+.tree-item .icon { font-size: 0.85rem; opacity: 0.7; flex-shrink: 0; }
+.tree-empty { padding: 1rem 0.75rem; font-size: 0.85rem; color: #adb5bd; }
+
+/* ── textarea ── */
+#editor-textarea { flex: 1; width: 100%; border: none; outline: none; resize: none; font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; font-size: 0.9rem; line-height: 1.65; padding: 1rem; background: #fff; color: #212529; }
+.filename-display { font-size: 0.85rem; color: #6c757d; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+.unsaved-dot { color: #e67e22; font-size: 1.2rem; line-height: 1; }
+
+/* ── gemtext preview ── */
+.gemtext-preview { padding: 1.5rem; font-size: 0.95rem; line-height: 1.75; }
+.gemtext-preview h1 { font-size: 1.6rem; margin: 0 0 1rem; }
+.gemtext-preview h2 { font-size: 1.3rem; margin: 1.25rem 0 0.75rem; }
+.gemtext-preview h3 { font-size: 1.1rem; margin: 1rem 0 0.5rem; }
+.gemtext-preview p { margin-bottom: 0.6rem; }
+.gemtext-preview a { color: #0d9488; }
+.gemtext-preview .gmi-link { display: block; margin: 0.25rem 0; }
+.gemtext-preview ul { padding-left: 1.5rem; margin-bottom: 0.6rem; }
+.gemtext-preview li { margin-bottom: 0.2rem; }
+.gemtext-preview blockquote { border-left: 3px solid #ced4da; padding-left: 1rem; color: #6c757d; margin: 0.5rem 0; }
+.gemtext-preview pre { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.85rem; margin: 0.75rem 0; white-space: pre; }
+
+/* ── modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal-overlay.hidden { display: none; }
+.modal { background: #fff; border-radius: 10px; padding: 1.5rem; width: 100%; max-width: 400px; }
+.modal h3 { margin-bottom: 1rem; }
+.modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem; }
+
+/* ── toast ── */
+#toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #212529; color: #fff; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.875rem; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 200; }
+#toast.show { opacity: 1; }
+
+/* ── responsive ── */
+@media (max-width: 768px) {
+  .editor-shell { grid-template-columns: 1fr; grid-template-rows: 56px auto 1fr; }
+  .editor-sidebar { display: none; }
+  .editor-preview { display: none; }
+  .editor-pane { border-right: none; }
+  .hero h1 { font-size: 1.8rem; }
+}

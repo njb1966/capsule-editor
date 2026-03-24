@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Gemcities</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e9ecef; color: #6c757d; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f3f5; vertical-align: middle; }
+    tr:hover td { background: #f8f9fa; }
+    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-ok { background: #d1fae5; color: #065f46; }
+    .badge-warn { background: #fef3c7; color: #92400e; }
+    .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .stat { display: inline-block; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 0.75rem 1.25rem; margin-right: 0.75rem; margin-bottom: 1rem; }
+    .stat-val { font-size: 1.6rem; font-weight: 700; }
+    .stat-lbl { font-size: 0.8rem; color: #6c757d; }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a class="nav-logo" href="/">Gem<span>cities</span></a>
+  <span style="font-size:0.85rem;color:#6c757d">Admin</span>
+</nav>
+
+<!-- Auth gate -->
+<div id="auth-gate" class="container" style="max-width:400px;padding-top:3rem">
+  <div class="card">
+    <h2>Admin access</h2>
+    <div id="auth-error" class="alert alert-error" style="display:none">Incorrect secret.</div>
+    <div class="form-group">
+      <label for="secret-input">Admin secret</label>
+      <input id="secret-input" type="password" placeholder="Enter admin secret">
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="tryAuth()">Sign in</button>
+  </div>
+</div>
+
+<!-- Admin panel -->
+<div id="admin-panel" style="display:none;padding:1.5rem">
+  <div id="stats"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+    <h2 style="font-size:1.1rem">Users</h2>
+    <button class="btn btn-secondary btn-sm" onclick="loadUsers()">Refresh</button>
+  </div>
+  <div id="alert-banner" class="alert" style="display:none"></div>
+  <div style="overflow-x:auto">
+    <table id="user-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Verified</th>
+          <th>Storage</th>
+          <th>Joined</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="user-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Change email modal -->
+<div class="modal-overlay hidden" id="email-modal">
+  <div class="modal">
+    <h3>Change email</h3>
+    <p style="font-size:0.85rem;color:#6c757d;margin-bottom:1rem">A new verification email will be sent to the updated address.</p>
+    <div class="form-group">
+      <label>New email address</label>
+      <input type="email" id="new-email-input" style="width:100%">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeEmailModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitEmailChange()">Update</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let adminSecret = '';
+let emailChangeTarget = '';
+
+const toastEl = document.getElementById('toast');
+let toastTimer;
+function toast(msg, isError) {
+  toastEl.textContent = msg;
+  toastEl.style.background = isError ? '#dc3545' : '#212529';
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3000);
+}
+
+function adminFetch(method, path, body) {
+  const opts = { method, headers: { 'X-Admin-Token': adminSecret } };
+  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  return fetch(path, opts).then(async r => {
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw data;
+    return data;
+  });
+}
+
+async function tryAuth() {
+  const secret = document.getElementById('secret-input').value.trim();
+  if (!secret) return;
+  adminSecret = secret;
+  try {
+    await adminFetch('GET', '/api/admin/users');
+    sessionStorage.setItem('adminSecret', secret);
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    loadUsers();
+  } catch (e) {
+    document.getElementById('auth-error').style.display = 'block';
+    adminSecret = '';
+  }
+}
+
+document.getElementById('secret-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryAuth();
+});
+
+function fmtStorage(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(2) + ' MB';
+}
+
+async function loadUsers() {
+  const users = await adminFetch('GET', '/api/admin/users').catch(() => []);
+  const tbody = document.getElementById('user-tbody');
+  tbody.innerHTML = '';
+
+  const total = users.length;
+  const verified = users.filter(u => u.email_verified).length;
+  document.getElementById('stats').innerHTML =
+    `<div class="stat"><div class="stat-val">${total}</div><div class="stat-lbl">Total users</div></div>` +
+    `<div class="stat"><div class="stat-val">${verified}</div><div class="stat-lbl">Verified</div></div>` +
+    `<div class="stat"><div class="stat-val">${total - verified}</div><div class="stat-lbl">Unverified</div></div>`;
+
+  for (const u of users) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${esc(u.username)}</strong></td>
+      <td>${esc(u.email)}</td>
+      <td><span class="badge ${u.email_verified ? 'badge-ok' : 'badge-warn'}">${u.email_verified ? 'Verified' : 'Pending'}</span></td>
+      <td>${fmtStorage(u.storage_bytes)}</td>
+      <td>${esc(u.created_at)}</td>
+      <td class="actions">
+        ${!u.email_verified ? `<button class="btn btn-secondary btn-sm" onclick="resend('${esc(u.username)}')">Resend email</button>` : ''}
+        ${!u.email_verified ? `<button class="btn btn-secondary btn-sm" onclick="forceVerify('${esc(u.username)}')">Force verify</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="openEmailModal('${esc(u.username)}')">Change email</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteUser('${esc(u.username)}')">Delete</button>
+      </td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+async function deleteUser(username) {
+  if (!confirm(`Delete user "${username}" and all their files? This cannot be undone.`)) return;
+  try {
+    await adminFetch('DELETE', `/api/admin/users/${username}`);
+    toast(`${username} deleted`);
+    loadUsers();
+  } catch (e) { toast('Delete failed', true); }
+}
+
+async function forceVerify(username) {
+  try {
+    await adminFetch('POST', `/api/admin/users/${username}/verify`);
+    toast(`${username} verified`);
+    loadUsers();
+  } catch (e) { toast('Failed', true); }
+}
+
+async function resend(username) {
+  try {
+    await adminFetch('POST', `/api/admin/users/${username}/resend`);
+    toast(`Verification email resent to ${username}`);
+  } catch (e) { toast(e.error === 'ALREADY_VERIFIED' ? 'Already verified' : 'Failed', true); }
+}
+
+function openEmailModal(username) {
+  emailChangeTarget = username;
+  document.getElementById('new-email-input').value = '';
+  document.getElementById('email-modal').classList.remove('hidden');
+  document.getElementById('new-email-input').focus();
+}
+
+function closeEmailModal() {
+  document.getElementById('email-modal').classList.add('hidden');
+}
+
+async function submitEmailChange() {
+  const email = document.getElementById('new-email-input').value.trim();
+  if (!email) return;
+  try {
+    await adminFetch('POST', `/api/admin/users/${emailChangeTarget}/email`, { email });
+    toast(`Email updated for ${emailChangeTarget}`);
+    closeEmailModal();
+    loadUsers();
+  } catch (e) {
+    toast(e.error === 'EMAIL_TAKEN' ? 'Email already in use' : 'Failed', true);
+  }
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Auto-restore session
+const saved = sessionStorage.getItem('adminSecret');
+if (saved) {
+  adminSecret = saved;
+  adminFetch('GET', '/api/admin/users').then(() => {
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    loadUsers();
+  }).catch(() => { adminSecret = ''; sessionStorage.removeItem('adminSecret'); });
+}
+</script>
+</body>
+</html>

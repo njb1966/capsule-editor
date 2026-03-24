@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — Gemcities</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="nav">
+  <a class="nav-logo" href="/">Gem<span>cities</span></a>
+  <div class="nav-links"><a href="/login.html">Sign in</a></div>
+</nav>
+<div class="container page-center">
+  <div class="card">
+    <h2>Create your capsule</h2>
+    <div id="alert" class="alert" style="display:none"></div>
+    <form id="form">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input id="username" type="text" autocomplete="username" spellcheck="false" required>
+        <div class="form-hint">3–32 characters. Lowercase letters, digits, hyphens only. Your capsule will be at <span id="preview-url">username.gemcities.com</span></div>
+      </div>
+      <div class="form-group">
+        <label for="email">Email address</label>
+        <input id="email" type="email" autocomplete="email" required>
+        <div class="form-hint">Used only for verification and account recovery.</div>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="new-password" required minlength="8">
+        <div class="form-hint">At least 8 characters.</div>
+      </div>
+      <button type="submit" class="btn btn-primary" id="submit-btn" style="width:100%">Create account</button>
+    </form>
+    <div class="form-footer">Already have an account? <a href="/login.html">Sign in</a></div>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+  const usernameInput = document.getElementById('username');
+  const previewUrl    = document.getElementById('preview-url');
+  usernameInput.addEventListener('input', () => {
+    const v = usernameInput.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    previewUrl.textContent = (v || 'username') + '.gemcities.com';
+  });
+
+  document.getElementById('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alert   = document.getElementById('alert');
+    const btn     = document.getElementById('submit-btn');
+    const username = usernameInput.value.toLowerCase().trim();
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    alert.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Creating account…';
+    try {
+      await api.register(username, email, password);
+      alert.className = 'alert alert-success';
+      alert.textContent = 'Account created! Check your email to verify your address before signing in.';
+      alert.style.display = 'block';
+      document.getElementById('form').style.display = 'none';
+    } catch (err) {
+      const msgs = {
+        INVALID_USERNAME: 'Invalid username. Use 3–32 lowercase letters, digits, or hyphens.',
+        USERNAME_TAKEN:   'That username is already taken.',
+        INVALID_EMAIL:    'Please enter a valid email address.',
+        EMAIL_TAKEN:      'An account with that email already exists.',
+        PASSWORD_TOO_SHORT: 'Password must be at least 8 characters.',
+        RATE_LIMITED:     'Too many attempts. Please wait a minute and try again.',
+      };
+      alert.className = 'alert alert-error';
+      alert.textContent = msgs[err.error] || 'Something went wrong. Please try again.';
+      alert.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Create account';
+    }
+  });
+</script>
+</body>
+</html>

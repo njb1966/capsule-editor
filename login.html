@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in — Gemcities</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="nav">
+  <a class="nav-logo" href="/">Gem<span>cities</span></a>
+  <div class="nav-links"><a href="/register.html">Register</a></div>
+</nav>
+<div class="container page-center">
+  <div class="card">
+    <h2>Sign in</h2>
+    <div id="alert" class="alert" style="display:none"></div>
+    <form id="form">
+      <div class="form-group">
+        <label for="email">Email address</label>
+        <input id="email" type="email" autocomplete="email" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary" id="submit-btn" style="width:100%">Sign in</button>
+    </form>
+    <div class="form-footer">
+      <a href="/forgot-password.html">Forgot password?</a>
+      &nbsp;·&nbsp;
+      No account? <a href="/register.html">Register</a>
+    </div>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+  document.getElementById('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alert = document.getElementById('alert');
+    const btn   = document.getElementById('submit-btn');
+    alert.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+    try {
+      await api.login(
+        document.getElementById('email').value.trim(),
+        document.getElementById('password').value
+      );
+      window.location.href = '/editor.html';
+    } catch (err) {
+      const msgs = {
+        INVALID_CREDENTIALS: 'Incorrect email or password.',
+        EMAIL_NOT_VERIFIED:  'Please verify your email address before signing in.',
+        RATE_LIMITED:        'Too many attempts. Please wait a minute and try again.',
+      };
+      alert.className = 'alert alert-error';
+      alert.textContent = msgs[err.error] || 'Something went wrong. Please try again.';
+      alert.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Sign in';
+    }
+  });
+</script>
+</body>
+</html>
