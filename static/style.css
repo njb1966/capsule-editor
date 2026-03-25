@@ -6,7 +6,7 @@ a { color: #0d9488; text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 header { background: #fff; border-bottom: 1px solid #e9ecef; padding: 0 1.5rem; height: 56px; display: flex; align-items: center; }
-.site-name { font-weight: 700; font-size: 1.1rem; color: #212529; letter-spacing: -0.02em; }
+.site-name { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; font-size: 1.1rem; color: #212529; letter-spacing: -0.02em; }
 
 .prose { max-width: 720px; margin: 2.5rem auto; padding: 0 1.5rem 4rem; }
 .prose h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.25rem; }
