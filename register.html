@@ -59,7 +59,7 @@
     try {
       await api.register(username, email, password);
       alert.className = 'alert alert-success';
-      alert.textContent = 'Account created! Check your email to verify your address before signing in.';
+      alert.textContent = 'Account created! Check your email to verify your address before signing in. If you don\'t see it within a few minutes, check your spam folder.';
       alert.style.display = 'block';
       document.getElementById('form').style.display = 'none';
     } catch (err) {
