@@ -51,6 +51,7 @@ button { cursor: pointer; font: inherit; }
 .btn-primary { background: #0d9488; color: #fff; }
 .btn-secondary { background: #fff; color: #212529; border: 1px solid #ced4da; }
 .btn-danger { background: #dc3545; color: #fff; }
+.btn-donate { background: #fff0f0; color: #b91c1c; border: 1px solid #fecaca; }
 .btn-sm { padding: 0.35rem 0.85rem; font-size: 0.82rem; }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
