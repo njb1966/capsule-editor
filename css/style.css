@@ -12,7 +12,8 @@ button { cursor: pointer; font: inherit; }
 
 /* ── nav ── */
 .nav { background: #fff; border-bottom: 1px solid #e9ecef; padding: 0 1.5rem; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
-.nav-logo { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; font-size: 1.1rem; color: #212529; letter-spacing: -0.02em; }
+.nav-logo { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; font-size: 1.1rem; color: #212529; letter-spacing: -0.02em; line-height: 1; }
+.nav-logo svg { display: block; flex-shrink: 0; }
 .nav-logo span { color: #0d9488; }
 .nav-links { display: flex; gap: 1rem; align-items: center; }
 .nav-links a { font-size: 0.9rem; color: #6c757d; }
