@@ -1,5 +1,6 @@
 // Editor state
 let currentFile = null;
+let currentIsDir = false;
 let dirty = false;
 let username = null;
 let treeData = [];
@@ -96,7 +97,9 @@ function renderTree(items, container, prefix) {
     el.className = 'tree-item' + (item.is_dir ? ' is-dir' : '');
     el.dataset.path = path;
     el.innerHTML = '<span class="icon">' + (item.is_dir ? '📁' : '📄') + '</span>' + escHtml(item.name);
-    if (!item.is_dir) {
+    if (item.is_dir) {
+      el.addEventListener('click', () => selectFolder(path, el));
+    } else {
       el.addEventListener('click', () => openFile(path, el));
     }
     container.appendChild(el);
@@ -107,6 +110,15 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+// Select a folder (highlights it, enables Delete)
+function selectFolder(path, el) {
+  currentFile = path;
+  currentIsDir = true;
+  filenameEl.textContent = path + '/';
+  document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
 // Open file in editor
 async function openFile(path, el) {
   if (dirty && !confirm('Discard unsaved changes?')) return;
@@ -114,6 +126,7 @@ async function openFile(path, el) {
     const content = await api.readFile(path);
     textarea.value = content;
     currentFile = path;
+    currentIsDir = false;
     dirty = false;
     unsavedDot.style.display = 'none';
     filenameEl.textContent = path;
@@ -127,7 +140,7 @@ async function openFile(path, el) {
 
 // Save current file
 async function saveFile() {
-  if (!currentFile) { toast('No file selected'); return; }
+  if (!currentFile || currentIsDir) { toast('No file selected'); return; }
   try {
     await api.writeFile(currentFile, textarea.value);
     dirty = false;
@@ -168,18 +181,25 @@ async function newFolder() {
   }
 }
 
-// Delete current file
+// Delete current file or folder
 async function deleteFile() {
   if (!currentFile) { toast('No file selected'); return; }
-  if (!confirm('Delete ' + currentFile + '?')) return;
+  const isDir = currentIsDir;
+  const label = isDir
+    ? 'folder "' + currentFile + '" and all its contents'
+    : currentFile;
+  if (!confirm('Delete ' + label + '?')) return;
   try {
     await api.deleteFile(currentFile);
     currentFile = null;
-    textarea.value = '';
-    dirty = false;
-    unsavedDot.style.display = 'none';
+    currentIsDir = false;
     filenameEl.textContent = 'No file open';
-    preview.innerHTML = '';
+    if (!isDir) {
+      textarea.value = '';
+      dirty = false;
+      unsavedDot.style.display = 'none';
+      preview.innerHTML = '';
+    }
     await loadTree();
     toast('Deleted');
   } catch (e) {
@@ -189,7 +209,7 @@ async function deleteFile() {
 
 // Rename current file
 async function renameFile() {
-  if (!currentFile) { toast('No file selected'); return; }
+  if (!currentFile || currentIsDir) { toast('No file selected'); return; }
   const newName = await showModal('Rename file', currentFile, 'Rename');
   if (!newName || newName === currentFile) return;
   try {
