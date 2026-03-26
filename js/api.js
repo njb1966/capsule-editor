@@ -63,6 +63,9 @@ const api = {
     window.location.href = '/api/export';
   },
 
+  getAccount: () =>
+    api._fetch('GET', '/api/account'),
+
   deleteAccount: (password) =>
     api._fetch('DELETE', '/api/account', { password }),
 };

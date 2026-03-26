@@ -9,17 +9,18 @@ let folderContents = {};
 let dragSrc = null;
 
 // DOM refs
-const textarea    = document.getElementById('editor-textarea');
-const preview     = document.getElementById('preview-content');
-const filenameEl  = document.getElementById('current-filename');
-const unsavedDot  = document.getElementById('unsaved-dot');
-const fileTree    = document.getElementById('file-tree');
-const toastEl     = document.getElementById('toast');
-const modal       = document.getElementById('modal');
-const modalTitle  = document.getElementById('modal-title');
-const modalInput  = document.getElementById('modal-input');
-const modalOk     = document.getElementById('modal-ok');
-const modalCancel = document.getElementById('modal-cancel');
+const textarea         = document.getElementById('editor-textarea');
+const preview          = document.getElementById('preview-content');
+const filenameEl       = document.getElementById('current-filename');
+const unsavedDot       = document.getElementById('unsaved-dot');
+const fileTree         = document.getElementById('file-tree');
+const toastEl          = document.getElementById('toast');
+const modal            = document.getElementById('modal');
+const modalTitle       = document.getElementById('modal-title');
+const modalInput       = document.getElementById('modal-input');
+const modalOk          = document.getElementById('modal-ok');
+const modalCancel      = document.getElementById('modal-cancel');
+const storageIndicator = document.getElementById('storage-indicator');
 
 // Toast
 let toastTimer;
@@ -171,6 +172,29 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+function fmtBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+  return (n / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+async function updateStorageIndicator() {
+  try {
+    const { storage_bytes, storage_limit_bytes } = await api.getAccount();
+    const pct = Math.min(100, (storage_bytes / storage_limit_bytes) * 100);
+    const color = pct >= 90 ? '#dc3545' : pct >= 70 ? '#fd7e14' : '#0d9488';
+    storageIndicator.innerHTML =
+      '<div style="font-size:0.72rem;color:#6c757d;margin-bottom:0.3rem">' +
+        fmtBytes(storage_bytes) + ' of ' + fmtBytes(storage_limit_bytes) + ' used' +
+      '</div>' +
+      '<div style="height:4px;background:#e9ecef;border-radius:2px">' +
+        '<div style="height:4px;width:' + pct.toFixed(1) + '%;background:' + color + ';border-radius:2px"></div>' +
+      '</div>';
+  } catch (_) {
+    // non-critical — silently fail
+  }
+}
+
 // Select a folder: offer to save if dirty, then toggle expand/collapse
 async function selectFolder(path) {
   if (dirty && currentFile && !currentIsDir) {
@@ -251,6 +275,7 @@ async function saveFile() {
     dirty = false;
     unsavedDot.style.display = 'none';
     toast('Saved');
+    updateStorageIndicator();
     return true;
   } catch (e) {
     const msg = e.error === 'LIMIT_EXCEEDED' ? 'Storage limit exceeded' : 'Save failed';
@@ -311,6 +336,7 @@ async function deleteFile() {
       preview.innerHTML = '';
     }
     await loadTree();
+    updateStorageIndicator();
     toast('Deleted');
   } catch (e) {
     toast('Delete failed');
@@ -373,6 +399,6 @@ async function logout() {
   } catch (e) {
     if (e.status === 401) { window.location.href = '/login.html'; return; }
   }
-  await loadTree();
+  await Promise.all([loadTree(), updateStorageIndicator()]);
   updatePreview();
 })();

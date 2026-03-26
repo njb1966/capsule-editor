@@ -17,6 +17,14 @@
   <h1 style="font-size:1.4rem;margin-bottom:2rem">Account settings</h1>
 
   <div class="card" style="margin-bottom:1.5rem">
+    <h2 style="font-size:1.1rem;margin-bottom:1rem">Storage</h2>
+    <div id="storage-text" style="font-size:0.9rem;color:#6c757d;margin-bottom:0.5rem">Loading…</div>
+    <div style="height:6px;background:#e9ecef;border-radius:3px">
+      <div id="storage-bar" style="height:6px;width:0%;background:#0d9488;border-radius:3px;transition:width 0.3s"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem">
     <h2 style="font-size:1.1rem;margin-bottom:1rem">Export capsule</h2>
     <p style="font-size:0.9rem;color:#6c757d;margin-bottom:1rem">Download all your files as a ZIP archive.</p>
     <button class="btn btn-secondary" onclick="api.export()">Download ZIP</button>
@@ -41,6 +49,27 @@
 </div>
 <script src="/js/api.js"></script>
 <script>
+  function fmtBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  (async () => {
+    try {
+      const { storage_bytes, storage_limit_bytes } = await api.getAccount();
+      const pct = Math.min(100, (storage_bytes / storage_limit_bytes) * 100);
+      const color = pct >= 90 ? '#dc3545' : pct >= 70 ? '#fd7e14' : '#0d9488';
+      document.getElementById('storage-text').textContent =
+        fmtBytes(storage_bytes) + ' of ' + fmtBytes(storage_limit_bytes) + ' used';
+      const bar = document.getElementById('storage-bar');
+      bar.style.width = pct.toFixed(1) + '%';
+      bar.style.background = color;
+    } catch (_) {
+      document.getElementById('storage-text').textContent = 'Could not load storage info.';
+    }
+  })();
+
   function showDeleteForm() { document.getElementById('delete-form').style.display = 'block'; }
   function hideDeleteForm() { document.getElementById('delete-form').style.display = 'none'; }
 
