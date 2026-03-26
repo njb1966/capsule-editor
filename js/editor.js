@@ -4,6 +4,8 @@ let currentIsDir = false;
 let dirty = false;
 let username = null;
 let treeData = [];
+let expandedFolders = new Set();
+let folderContents = {};
 
 // DOM refs
 const textarea    = document.getElementById('editor-textarea');
@@ -70,11 +72,23 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Load file tree
+// Load file tree (also refreshes contents of expanded folders)
 async function loadTree() {
   try {
     treeData = await api.listFiles('');
+    for (const path of expandedFolders) {
+      try {
+        folderContents[path] = await api.listFiles(path);
+      } catch(e) {
+        expandedFolders.delete(path);
+        delete folderContents[path];
+      }
+    }
     renderTree(treeData, fileTree, '');
+    if (currentFile) {
+      const activeEl = document.querySelector('[data-path="' + currentFile + '"]');
+      if (activeEl) activeEl.classList.add('active');
+    }
   } catch (e) {
     if (e.status === 401) { window.location.href = '/login.html'; }
   }
@@ -86,23 +100,34 @@ function renderTree(items, container, prefix) {
     container.innerHTML = '<div class="tree-empty">No files yet</div>';
     return;
   }
-  // Dirs first, then files
+  renderTreeItems(items, container, prefix);
+}
+
+function renderTreeItems(items, container, prefix) {
+  const depth = prefix ? prefix.split('/').length : 0;
   const sorted = [...items].sort((a, b) => {
     if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
   for (const item of sorted) {
     const path = prefix ? prefix + '/' + item.name : item.name;
+    const isExpanded = item.is_dir && expandedFolders.has(path);
     const el = document.createElement('div');
     el.className = 'tree-item' + (item.is_dir ? ' is-dir' : '');
     el.dataset.path = path;
-    el.innerHTML = '<span class="icon">' + (item.is_dir ? '📁' : '📄') + '</span>' + escHtml(item.name);
+    el.style.paddingLeft = (8 + depth * 16) + 'px';
+    const icon = item.is_dir ? (isExpanded ? '📂' : '📁') : '📄';
+    el.innerHTML = '<span class="icon">' + icon + '</span>' + escHtml(item.name);
     if (item.is_dir) {
-      el.addEventListener('click', () => selectFolder(path, el));
+      el.addEventListener('click', () => selectFolder(path));
     } else {
-      el.addEventListener('click', () => openFile(path, el));
+      el.addEventListener('click', () => openFile(path));
     }
     container.appendChild(el);
+    // If expanded, render children inline (indented)
+    if (item.is_dir && isExpanded && folderContents[path]) {
+      renderTreeItems(folderContents[path], container, path);
+    }
   }
 }
 
@@ -110,18 +135,61 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// Select a folder (highlights it, enables Delete)
-function selectFolder(path, el) {
+// Select a folder: offer to save if dirty, then toggle expand/collapse
+async function selectFolder(path) {
+  if (dirty && currentFile && !currentIsDir) {
+    if (!confirm('Save unsaved changes to "' + currentFile + '"?')) return;
+    const ok = await saveFile();
+    if (!ok) return;
+  }
+
   currentFile = path;
   currentIsDir = true;
   filenameEl.textContent = path + '/';
-  document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
-  if (el) el.classList.add('active');
+
+  if (expandedFolders.has(path)) {
+    expandedFolders.delete(path);
+  } else {
+    expandedFolders.add(path);
+    if (!folderContents[path]) {
+      try {
+        folderContents[path] = await api.listFiles(path);
+      } catch(e) {
+        folderContents[path] = [];
+      }
+    }
+  }
+
+  renderTree(treeData, fileTree, '');
+  const activeEl = document.querySelector('[data-path="' + path + '"]');
+  if (activeEl) activeEl.classList.add('active');
 }
 
-// Open file in editor
-async function openFile(path, el) {
+// Open file in editor, auto-expanding parent folders so the file is visible
+async function openFile(path) {
   if (dirty && !confirm('Discard unsaved changes?')) return;
+
+  // Expand all ancestor folders so the file shows up in the tree
+  const parts = path.split('/');
+  let needsRender = false;
+  for (let i = 1; i < parts.length; i++) {
+    const folderPath = parts.slice(0, i).join('/');
+    if (!expandedFolders.has(folderPath)) {
+      expandedFolders.add(folderPath);
+      if (!folderContents[folderPath]) {
+        try {
+          folderContents[folderPath] = await api.listFiles(folderPath);
+        } catch(e) {
+          folderContents[folderPath] = [];
+        }
+      }
+      needsRender = true;
+    }
+  }
+  if (needsRender) {
+    renderTree(treeData, fileTree, '');
+  }
+
   try {
     const content = await api.readFile(path);
     textarea.value = content;
@@ -132,23 +200,26 @@ async function openFile(path, el) {
     filenameEl.textContent = path;
     updatePreview();
     document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
-    if (el) el.classList.add('active');
+    const activeEl = document.querySelector('[data-path="' + path + '"]');
+    if (activeEl) activeEl.classList.add('active');
   } catch (e) {
     toast('Could not open file');
   }
 }
 
-// Save current file
+// Save current file — returns true on success, false on failure
 async function saveFile() {
-  if (!currentFile || currentIsDir) { toast('No file selected'); return; }
+  if (!currentFile || currentIsDir) { toast('No file selected'); return false; }
   try {
     await api.writeFile(currentFile, textarea.value);
     dirty = false;
     unsavedDot.style.display = 'none';
     toast('Saved');
+    return true;
   } catch (e) {
     const msg = e.error === 'LIMIT_EXCEEDED' ? 'Storage limit exceeded' : 'Save failed';
     toast(msg);
+    return false;
   }
 }
 
@@ -160,8 +231,7 @@ async function newFile() {
   try {
     await api.writeFile(path, '# ' + path + '\n');
     await loadTree();
-    const el = document.querySelector('[data-path="' + path + '"]');
-    openFile(path, el);
+    await openFile(path);
     toast('File created');
   } catch (e) {
     toast('Could not create file');
@@ -191,6 +261,10 @@ async function deleteFile() {
   if (!confirm('Delete ' + label + '?')) return;
   try {
     await api.deleteFile(currentFile);
+    if (isDir) {
+      expandedFolders.delete(currentFile);
+      delete folderContents[currentFile];
+    }
     currentFile = null;
     currentIsDir = false;
     filenameEl.textContent = 'No file open';
