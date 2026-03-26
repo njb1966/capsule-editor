@@ -317,17 +317,43 @@ async function deleteFile() {
   }
 }
 
-// Rename current file
+// Rename current file or folder
 async function renameFile() {
-  if (!currentFile || currentIsDir) { toast('No file selected'); return; }
-  const newName = await showModal('Rename file', currentFile, 'Rename');
+  if (!currentFile) { toast('No file selected'); return; }
+  const label = currentIsDir ? 'Rename folder' : 'Rename file';
+  const newName = await showModal(label, currentFile, 'Rename');
   if (!newName || newName === currentFile) return;
   try {
     await api.renameFile(currentFile, newName);
+    if (currentIsDir) {
+      // Update cached expanded-folder state to reflect the new path
+      const oldPrefix = currentFile + '/';
+      const newPrefix = newName + '/';
+      for (const path of [...expandedFolders]) {
+        if (path === currentFile) {
+          expandedFolders.delete(path);
+          expandedFolders.add(newName);
+        } else if (path.startsWith(oldPrefix)) {
+          expandedFolders.delete(path);
+          expandedFolders.add(newPrefix + path.slice(oldPrefix.length));
+        }
+      }
+      for (const path of Object.keys(folderContents)) {
+        if (path === currentFile) {
+          folderContents[newName] = folderContents[path];
+          delete folderContents[path];
+        } else if (path.startsWith(oldPrefix)) {
+          folderContents[newPrefix + path.slice(oldPrefix.length)] = folderContents[path];
+          delete folderContents[path];
+        }
+      }
+      toast('Folder renamed. Links to files inside may be broken.', 4000);
+    } else {
+      toast('Renamed');
+    }
     currentFile = newName;
-    filenameEl.textContent = newName;
+    filenameEl.textContent = currentIsDir ? newName + '/' : newName;
     await loadTree();
-    toast('Renamed');
   } catch (e) {
     toast('Rename failed');
   }
