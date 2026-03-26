@@ -6,6 +6,7 @@ let username = null;
 let treeData = [];
 let expandedFolders = new Set();
 let folderContents = {};
+let dragSrc = null;
 
 // DOM refs
 const textarea    = document.getElementById('editor-textarea');
@@ -120,8 +121,43 @@ function renderTreeItems(items, container, prefix) {
     el.innerHTML = '<span class="icon">' + icon + '</span>' + escHtml(item.name);
     if (item.is_dir) {
       el.addEventListener('click', () => selectFolder(path));
+      el.addEventListener('dragover', (e) => {
+        if (!dragSrc || dragSrc === path) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        document.querySelectorAll('.drag-over').forEach(i => i.classList.remove('drag-over'));
+        el.classList.add('drag-over');
+      });
+      el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+      el.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        el.classList.remove('drag-over');
+        if (!dragSrc) return;
+        const src = dragSrc;
+        dragSrc = null;
+        const basename = src.split('/').pop();
+        const destPath = path + '/' + basename;
+        if (destPath === src) return;
+        try {
+          await api.renameFile(src, destPath);
+          if (currentFile === src) { currentFile = destPath; filenameEl.textContent = destPath; }
+          if (!expandedFolders.has(path)) expandedFolders.add(path);
+          delete folderContents[path];
+          await loadTree();
+          toast('Moved to ' + path + '/');
+        } catch(e) { toast('Move failed'); }
+      });
     } else {
       el.addEventListener('click', () => openFile(path));
+      el.draggable = true;
+      el.addEventListener('dragstart', (e) => {
+        dragSrc = path;
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      el.addEventListener('dragend', () => {
+        dragSrc = null;
+        document.querySelectorAll('.drag-over').forEach(i => i.classList.remove('drag-over'));
+      });
     }
     container.appendChild(el);
     // If expanded, render children inline (indented)

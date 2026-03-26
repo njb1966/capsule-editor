@@ -93,6 +93,7 @@ input:focus { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,.15);
 .tree-item:hover { background: #f8f9fa; }
 .tree-item.active { background: #e6f3f2; color: #0d9488; font-weight: 600; }
 .tree-item.is-dir { font-weight: 600; color: #212529; }
+.tree-item.drag-over { background: #ccfbf1; outline: 2px dashed #0d9488; outline-offset: -2px; }
 .tree-item .icon { font-size: 0.85rem; opacity: 0.7; flex-shrink: 0; }
 .tree-empty { padding: 1rem 0.75rem; font-size: 0.85rem; color: #adb5bd; }
 
