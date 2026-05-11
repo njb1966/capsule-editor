@@ -37,10 +37,11 @@ button { cursor: pointer; font: inherit; }
 .step p { font-size: 0.9rem; color: #6c757d; }
 
 /* ── access + about sections ── */
-.access, .about { max-width: 680px; margin: 3rem auto; padding: 0 1rem; }
-.access h2, .about h2 { font-size: 1.4rem; margin-bottom: 1rem; }
-.access p, .about p { color: #495057; margin-bottom: 0.75rem; font-size: 0.95rem; }
+.access, .about, .forum { max-width: 680px; margin: 3rem auto; padding: 0 1rem; }
+.access h2, .about h2, .forum h2 { font-size: 1.4rem; margin-bottom: 1rem; }
+.access p, .about p, .forum p { color: #495057; margin-bottom: 0.75rem; font-size: 0.95rem; }
 .access { border-bottom: 1px solid #e9ecef; padding-bottom: 2.5rem; }
+.about { border-bottom: 1px solid #e9ecef; padding-bottom: 2.5rem; }
 
 /* ── footer ── */
 .footer { border-top: 1px solid #e9ecef; padding: 1.5rem 1rem; text-align: center; font-size: 0.85rem; color: #adb5bd; }
