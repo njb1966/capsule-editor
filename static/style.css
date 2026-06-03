@@ -7,7 +7,7 @@ a:hover { text-decoration: underline; }
 
 header { background: #fff; border-bottom: 1px solid #e9ecef; padding: 0 1.5rem; height: 56px; display: flex; align-items: center; }
 .site-name { display: inline-flex; align-items: center; font-weight: 700; font-size: 1.1rem; color: #212529; letter-spacing: -0.02em; line-height: 1; }
-.site-name svg { display: block; flex-shrink: 0; margin-right: 0.4rem; }
+.site-name img { display: block; flex-shrink: 0; height: 48px; max-height: calc(100% - 8px); width: auto; max-width: 44vw; }
 
 .prose { max-width: 720px; margin: 2.5rem auto; padding: 0 1.5rem 4rem; }
 .prose h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.25rem; }
