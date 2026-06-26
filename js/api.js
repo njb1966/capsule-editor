@@ -13,8 +13,8 @@ const api = {
     return data;
   },
 
-  register: (username, email, password) =>
-    api._fetch('POST', '/api/register', { username, email, password }),
+  register: (username, email, password, announcement_opt_in, website) =>
+    api._fetch('POST', '/api/register', { username, email, password, announcement_opt_in, website }),
 
   verifyEmail: (token) =>
     api._fetch('POST', '/api/verify-email', { token }),
@@ -65,6 +65,9 @@ const api = {
 
   getAccount: () =>
     api._fetch('GET', '/api/account'),
+
+  updateAnnouncementOptIn: (announcement_opt_in) =>
+    api._fetch('PUT', '/api/account/announcement-opt-in', { announcement_opt_in }),
 
   deleteAccount: (password) =>
     api._fetch('DELETE', '/api/account', { password }),

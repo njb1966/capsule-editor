@@ -30,6 +30,15 @@
     <button class="btn btn-secondary" onclick="api.export()">Download ZIP</button>
   </div>
 
+  <div class="card" style="margin-bottom:1.5rem">
+    <h2 style="font-size:1.1rem;margin-bottom:1rem">Email announcements</h2>
+    <div id="announce-alert" class="alert" style="display:none"></div>
+    <label style="display:flex;gap:0.5rem;align-items:flex-start;font-size:0.9rem">
+      <input id="announcement-opt-in" type="checkbox" style="margin-top:0.2rem">
+      <span>Email me occasional GemCities announcements and feedback requests. Optional.</span>
+    </label>
+  </div>
+
   <div class="card" style="margin-bottom:1.5rem;border-color:#fecaca">
     <h2 style="font-size:1.1rem;margin-bottom:0.5rem;color:#dc3545">Delete account</h2>
     <p style="font-size:0.9rem;color:#6c757d;margin-bottom:1rem">Permanently deletes your account and all files. This cannot be undone.</p>
@@ -57,7 +66,7 @@
 
   (async () => {
     try {
-      const { storage_bytes, storage_limit_bytes } = await api.getAccount();
+      const { storage_bytes, storage_limit_bytes, announcement_opt_in } = await api.getAccount();
       const pct = Math.min(100, (storage_bytes / storage_limit_bytes) * 100);
       const color = pct >= 90 ? '#dc3545' : pct >= 70 ? '#fd7e14' : '#0d9488';
       document.getElementById('storage-text').textContent =
@@ -65,10 +74,27 @@
       const bar = document.getElementById('storage-bar');
       bar.style.width = pct.toFixed(1) + '%';
       bar.style.background = color;
+      document.getElementById('announcement-opt-in').checked = !!announcement_opt_in;
     } catch (_) {
       document.getElementById('storage-text').textContent = 'Could not load storage info.';
     }
   })();
+
+  document.getElementById('announcement-opt-in').addEventListener('change', async (e) => {
+    const alert = document.getElementById('announce-alert');
+    alert.style.display = 'none';
+    try {
+      await api.updateAnnouncementOptIn(e.target.checked);
+      alert.className = 'alert alert-success';
+      alert.textContent = 'Email announcement preference saved.';
+      alert.style.display = 'block';
+    } catch (_) {
+      e.target.checked = !e.target.checked;
+      alert.className = 'alert alert-error';
+      alert.textContent = 'Could not save preference.';
+      alert.style.display = 'block';
+    }
+  });
 
   function showDeleteForm() { document.getElementById('delete-form').style.display = 'block'; }
   function hideDeleteForm() { document.getElementById('delete-form').style.display = 'none'; }

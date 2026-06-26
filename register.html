@@ -24,13 +24,21 @@
       <div class="form-group">
         <label for="email">Email address</label>
         <input id="email" type="email" autocomplete="email" required>
-        <div class="form-hint">Used only for verification and account recovery.</div>
+        <div class="form-hint">Used for verification and account recovery. Optional announcements require your consent below.</div>
       </div>
       <div class="form-group">
         <label for="password">Password</label>
-        <input id="password" type="password" autocomplete="new-password" required minlength="8">
-        <div class="form-hint">At least 8 characters.</div>
+        <input id="password" type="password" autocomplete="new-password" required minlength="10">
+        <div class="form-hint">At least 10 characters.</div>
       </div>
+      <div class="form-group" aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden">
+        <label for="website">Website</label>
+        <input id="website" type="text" name="website" tabindex="-1" autocomplete="off">
+      </div>
+      <label style="display:flex;gap:0.5rem;align-items:flex-start;font-size:0.9rem;margin-bottom:0.75rem">
+        <input id="announcement-opt-in" type="checkbox" style="margin-top:0.2rem">
+        <span>Email me occasional GemCities announcements and feedback requests. Optional.</span>
+      </label>
       <p class="form-hint" style="margin-bottom:0.75rem">By creating an account, you agree to our <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.</p>
       <button type="submit" class="btn btn-primary" id="submit-btn" style="width:100%">Create account</button>
     </form>
@@ -53,11 +61,13 @@
     const username = usernameInput.value.toLowerCase().trim();
     const email    = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
+    const announcementOptIn = document.getElementById('announcement-opt-in').checked;
+    const website = document.getElementById('website').value;
     alert.style.display = 'none';
     btn.disabled = true;
     btn.textContent = 'Creating account…';
     try {
-      await api.register(username, email, password);
+      await api.register(username, email, password, announcementOptIn, website);
       alert.className = 'alert alert-success';
       alert.textContent = 'Account created! Check your email to verify your address before signing in. If you don\'t see it within a few minutes, check your spam folder.';
       alert.style.display = 'block';
@@ -68,8 +78,8 @@
         USERNAME_TAKEN:   'That username is already taken.',
         INVALID_EMAIL:    'Please enter a valid email address.',
         EMAIL_TAKEN:      'An account with that email already exists.',
-        PASSWORD_TOO_SHORT: 'Password must be at least 8 characters.',
-        RATE_LIMITED:     'Too many attempts. Please wait a minute and try again.',
+        PASSWORD_TOO_SHORT: 'Password must be at least 10 characters.',
+        RATE_LIMITED:     'Too many attempts. Please wait before trying again.',
       };
       alert.className = 'alert alert-error';
       alert.textContent = msgs[err.error] || 'Something went wrong. Please try again.';

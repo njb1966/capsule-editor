@@ -17,6 +17,12 @@
     .stat { display: inline-block; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 0.75rem 1.25rem; margin-right: 0.75rem; margin-bottom: 1rem; }
     .stat-val { font-size: 1.6rem; font-weight: 700; }
     .stat-lbl { font-size: 0.8rem; color: #6c757d; }
+    .tab-bar { display: flex; gap: 0; border-bottom: 2px solid #e9ecef; margin-bottom: 1.5rem; }
+    .tab-btn { background: none; border: none; border-bottom: 3px solid transparent; padding: 0.6rem 1.25rem; font-size: 0.9rem; font-weight: 500; color: #6c757d; cursor: pointer; margin-bottom: -2px; }
+    .tab-btn.active { color: #065f46; border-bottom-color: #065f46; }
+    .tab-btn:hover:not(.active) { color: #212529; }
+    .empty-state { color: #6c757d; font-size: 0.9rem; padding: 2rem 0; text-align: center; }
+    .email-list { width: 100%; min-height: 7rem; font-family: monospace; font-size: 0.85rem; }
   </style>
 </head>
 <body>
@@ -40,26 +46,62 @@
 
 <!-- Admin panel -->
 <div id="admin-panel" style="display:none;padding:1.5rem">
-  <div id="stats"></div>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-    <h2 style="font-size:1.1rem">Users</h2>
-    <button class="btn btn-secondary btn-sm" onclick="loadUsers()">Refresh</button>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-users-btn" onclick="showTab('users')">Users</button>
+    <button class="tab-btn" id="tab-optins-btn" onclick="showTab('optins')">Email opt-ins</button>
   </div>
-  <div id="alert-banner" class="alert" style="display:none"></div>
-  <div style="overflow-x:auto">
-    <table id="user-table">
-      <thead>
-        <tr>
-          <th>Username</th>
-          <th>Email</th>
-          <th>Verified</th>
-          <th>Storage</th>
-          <th>Joined</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="user-tbody"></tbody>
-    </table>
+
+  <div id="tab-users">
+    <div id="stats"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h2 style="font-size:1.1rem">Users</h2>
+      <button class="btn btn-secondary btn-sm" onclick="loadUsers()">Refresh</button>
+    </div>
+    <div id="alert-banner" class="alert" style="display:none"></div>
+    <div style="overflow-x:auto">
+      <table id="user-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Verified</th>
+            <th>Announcements</th>
+            <th>Storage</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="user-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="tab-optins" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h2 style="font-size:1.1rem">Email opt-ins</h2>
+      <div style="display:flex;gap:0.5rem">
+        <button class="btn btn-secondary btn-sm" onclick="copyOptInEmails()">Copy emails</button>
+        <button class="btn btn-secondary btn-sm" onclick="loadUsers()">Refresh</button>
+      </div>
+    </div>
+    <p style="font-size:0.85rem;color:#6c757d;margin-bottom:1rem">
+      Verified users listed here explicitly opted in to occasional GemCities announcements and feedback requests.
+    </p>
+    <textarea id="optin-email-list" class="email-list" readonly></textarea>
+    <div id="optin-table-wrap" style="overflow-x:auto;margin-top:1rem">
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Verified</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody id="optin-tbody"></tbody>
+      </table>
+    </div>
+    <p id="optin-empty" class="empty-state" style="display:none">No users have opted in.</p>
   </div>
 </div>
 
@@ -84,6 +126,8 @@
 <script>
 let adminSecret = '';
 let emailChangeTarget = '';
+let cachedUsers = [];
+let activeTab = 'users';
 
 const toastEl = document.getElementById('toast');
 let toastTimer;
@@ -125,6 +169,15 @@ document.getElementById('secret-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') tryAuth();
 });
 
+function showTab(name) {
+  activeTab = name;
+  document.getElementById('tab-users').style.display = name === 'users' ? '' : 'none';
+  document.getElementById('tab-optins').style.display = name === 'optins' ? '' : 'none';
+  document.getElementById('tab-users-btn').classList.toggle('active', name === 'users');
+  document.getElementById('tab-optins-btn').classList.toggle('active', name === 'optins');
+  if (name === 'optins') renderOptIns(cachedUsers);
+}
+
 function fmtStorage(bytes) {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
@@ -133,15 +186,18 @@ function fmtStorage(bytes) {
 
 async function loadUsers() {
   const users = await adminFetch('GET', '/api/admin/users').catch(() => []);
+  cachedUsers = users;
   const tbody = document.getElementById('user-tbody');
   tbody.innerHTML = '';
 
   const total = users.length;
   const verified = users.filter(u => u.email_verified).length;
+  const optedIn = users.filter(u => u.announcement_opt_in).length;
   document.getElementById('stats').innerHTML =
     `<div class="stat"><div class="stat-val">${total}</div><div class="stat-lbl">Total users</div></div>` +
     `<div class="stat"><div class="stat-val">${verified}</div><div class="stat-lbl">Verified</div></div>` +
-    `<div class="stat"><div class="stat-val">${total - verified}</div><div class="stat-lbl">Unverified</div></div>`;
+    `<div class="stat"><div class="stat-val">${total - verified}</div><div class="stat-lbl">Unverified</div></div>` +
+    `<div class="stat"><div class="stat-val">${optedIn}</div><div class="stat-lbl">Email opt-ins</div></div>`;
 
   for (const u of users) {
     const tr = document.createElement('tr');
@@ -149,6 +205,7 @@ async function loadUsers() {
       <td><strong>${esc(u.username)}</strong></td>
       <td>${esc(u.email)}</td>
       <td><span class="badge ${u.email_verified ? 'badge-ok' : 'badge-warn'}">${u.email_verified ? 'Verified' : 'Pending'}</span></td>
+      <td><span class="badge ${u.announcement_opt_in ? 'badge-ok' : 'badge-warn'}">${u.announcement_opt_in ? 'Yes' : 'No'}</span></td>
       <td>${fmtStorage(u.storage_bytes)}</td>
       <td>${esc(u.created_at)}</td>
       <td class="actions">
@@ -159,6 +216,43 @@ async function loadUsers() {
       </td>`;
     tbody.appendChild(tr);
   }
+  if (activeTab === 'optins') renderOptIns(users);
+}
+
+function renderOptIns(users) {
+  const optedIn = users.filter(u => u.announcement_opt_in && u.email_verified);
+  const emails = optedIn.map(u => u.email).join('\n');
+  document.getElementById('optin-email-list').value = emails;
+  document.getElementById('optin-empty').style.display = optedIn.length === 0 ? '' : 'none';
+  document.getElementById('optin-table-wrap').style.display = optedIn.length === 0 ? 'none' : '';
+
+  const tbody = document.getElementById('optin-tbody');
+  tbody.innerHTML = '';
+  for (const u of optedIn) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${esc(u.username)}</strong></td>
+      <td>${esc(u.email)}</td>
+      <td><span class="badge ${u.email_verified ? 'badge-ok' : 'badge-warn'}">${u.email_verified ? 'Verified' : 'Pending'}</span></td>
+      <td>${esc(u.created_at)}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+async function copyOptInEmails() {
+  const list = document.getElementById('optin-email-list');
+  if (!list.value.trim()) {
+    toast('No opt-in emails to copy', true);
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(list.value);
+  } catch (_) {
+    list.focus();
+    list.select();
+    document.execCommand('copy');
+  }
+  toast('Opt-in emails copied');
 }
 
 async function deleteUser(username) {
